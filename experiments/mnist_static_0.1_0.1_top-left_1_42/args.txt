@@ -1,0 +1,1 @@
+Namespace(dataset='mnist', lr=0.001, batch_size=16, epochs=10, T=16, amp=False, cupy=True, loss='mse', optim='adam', trigger_label=0, polarity=1, trigger_size=0.1, epsilon=0.1, pos='top-left', type='static', n_masks=2, least=False, most_polarity=False, momentum=0.9, data_dir='data', save_path='experiments', model_path=None, seed=42)
