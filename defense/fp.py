@@ -234,8 +234,7 @@ class FinePrune(defense):
     """
 
     def __init__(self):
-        super(FinePrune).__init__()
-        pass
+        super().__init__()
 
     def set_args(self, parser):
         parser.add_argument('--epsilon', default=0.1, type=float, help='The percentage of poisoned data')

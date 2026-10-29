@@ -14,6 +14,7 @@
 |---|---|
 | `main.py` | static, moving, smart 트리거를 이용한 백도어 SNN 학습 |
 | `dynamic.py` | dynamic 트리거 실험 코드 |
+| `defense/base.py` | 방어 모듈이 공유하는 기본 클래스 |
 | `defense/fp.py` | HS-FP 방어 구현 |
 | `defense/ssfp.py` | SS-FP 방어 구현 |
 | `models.py`, `datasets.py`, `poisoned_dataset.py` | SNN 모델, 데이터셋 로딩, 트리거 데이터 생성 |
@@ -67,9 +68,15 @@ python main.py --dataset mnist --T 16 --type static --trigger_label 1 --polarity
 
 이는 논문에 기재된 결과이며, 이 저장소에서 동일한 수치가 재현되었음을 의미하지 않습니다. 논문은 두 방법 모두 완전연결층 뉴런의 90% 이상을 제거해야 방어 효과를 얻는 경우가 있었고, DVS128-Gesture에서는 제한된 데이터와 높은 시공간 복잡도로 정확도 회복이 불안정할 수 있다고 보고합니다.
 
-## 현재 실행 경로의 제한
+## 방어 실행 예시
 
-`defense/fp.py`와 `defense/ssfp.py`는 `defense.base`를 import하지만, 현재 저장소에는 `defense/base.py`가 없습니다. 따라서 이 두 방어 스크립트는 필요한 기반 모듈이 추가되기 전까지 독립 실행할 수 없습니다. `main.py`의 공격 모델 학습과는 별개의 제한입니다.
+백도어 학습 모델과 데이터가 준비되어 있다면 N-MNIST HS-FP를 다음과 같이 실행합니다. 논문 설정인 pruning 비율 0.05, 허용 정확도 비율 0.8, fine-tuning 20 epoch를 사용합니다.
+
+```bash
+python defense/fp.py --dataset nmnist --model_path experiments/mnist_static_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+```
+
+SS-FP는 같은 인자에서 `defense/fp.py`를 `defense/ssfp.py`로 바꿔 실행합니다. DVS128-Gesture는 `--dataset gesture`, Gesture 모델 경로, `--acc_ratio 0.3`, `--epochs 128`을 사용합니다. GPU가 없으면 `--device cpu`로 바꿀 수 있습니다.
 
 ## 인용
 
