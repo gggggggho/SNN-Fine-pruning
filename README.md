@@ -45,15 +45,45 @@ data/
 - [DVS128-Gesture](https://ibm.ent.box.com/s/3hiq58ww1pbbjrinh367ykfdf60xsfm8/folder/50167556794)는 내려받아 `data/gesture/`에 둡니다.
 - 방어 코드에서 N-MNIST를 지정할 때 데이터셋 이름은 `nmnist`입니다. `defense/fp.py`와 `defense/ssfp.py`는 `data/mnist/`만 있고 `data/nmnist/`가 없으면 별칭 폴더를 준비합니다.
 
-## 백도어 모델 학습 예시
+## 백도어 모델 학습
 
-N-MNIST에 static 트리거를 넣어 10 epoch 동안 학습하는 예시입니다. 논문 설정에 맞춰 오염률과 트리거 크기를 10%, 타깃 라벨과 극성을 1로 지정했습니다.
+아래 명령은 N-MNIST에서 논문 공격 설정(오염률 10%, 트리거 크기 10%, 타깃 라벨 1, 극성 1, seed 42)으로 static, moving, smart 모델을 각각 학습합니다. `main.py --type`의 허용값은 `static`, `moving`, `smart`입니다.
 
 ```bash
-python main.py --dataset mnist --T 16 --type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --batch_size 16 --epochs 10
+python main.py --dataset mnist --T 16 --type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --batch_size 16 --epochs 10 --seed 42
+python main.py --dataset mnist --T 16 --type moving --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --batch_size 16 --epochs 10 --seed 42
+python main.py --dataset mnist --T 16 --type smart --trigger_label 1 --polarity 1 --trigger_size 0.1 --epsilon 0.1 --batch_size 16 --epochs 10 --seed 42 --least --n_masks 2
 ```
 
-`--type`은 `static`, `moving`, `smart` 중에서 선택합니다. smart 공격에서 비활성 영역을 선택하려면 `--least`를 추가합니다. `--data_dir`와 `--save_path`로 데이터 및 결과 위치를 바꿀 수 있습니다. 학습된 모델은 기본적으로 `experiments/<실험 설정>/model.pth`에 저장됩니다.
+생성되는 체크포인트 경로는 다음과 같습니다.
+
+| 트리거 | 체크포인트 |
+|---|---|
+| static | `experiments/mnist_static_0.1_0.1_top-left_1_42/model.pth` |
+| moving | `experiments/mnist_moving_0.1_0.1_top-left_1_42/model.pth` |
+| smart | `experiments/mnist_smart_0.1_0.1_42/model.pth` |
+
+## HS-FP 적용
+
+앞 절에서 학습한 각 모델에 HS-FP를 적용합니다. 방어 스크립트의 데이터셋 이름은 `nmnist`이며, 스마트 트리거 모델에는 학습 때와 같이 `--least`를 지정합니다.
+
+```bash
+python defense/fp.py --dataset nmnist --model_path experiments/mnist_static_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+python defense/fp.py --dataset nmnist --model_path experiments/mnist_moving_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type moving --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+python defense/fp.py --dataset nmnist --model_path experiments/mnist_smart_0.1_0.1_42/model.pth --T 16 --trigger_type smart --trigger_label 1 --polarity 1 --trigger_size 0.1 --epsilon 0.1 --least --n_masks 2 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+```
+
+## SS-FP 적용
+
+같은 세 백도어 모델에 SS-FP를 적용합니다. 옵션은 HS-FP와 같고, 실행 파일만 `defense/ssfp.py`로 바꿉니다.
+
+```bash
+python defense/ssfp.py --dataset nmnist --model_path experiments/mnist_static_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+python defense/ssfp.py --dataset nmnist --model_path experiments/mnist_moving_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type moving --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+python defense/ssfp.py --dataset nmnist --model_path experiments/mnist_smart_0.1_0.1_42/model.pth --T 16 --trigger_type smart --trigger_label 1 --polarity 1 --trigger_size 0.1 --epsilon 0.1 --least --n_masks 2 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
+```
+
+모든 방어 결과는 기본적으로 `experiments/` 아래에 저장됩니다. DVS128-Gesture 모델을 방어할 때는 체크포인트와 `--dataset gesture`를 사용하고, 논문 설정에 따라 `--acc_ratio 0.3 --epochs 128`로 바꿉니다. GPU가 없으면 `--device cpu`를 지정합니다. `--save_path`를 학습 명령에 지정했다면 방어 명령의 `--model_path`도 해당 폴더로 바꿉니다.
 
 ## 논문 결과
 
@@ -67,14 +97,4 @@ python main.py --dataset mnist --T 16 --type static --trigger_label 1 --polarity
 | SS-FP | DVS128-Gesture | 67.01–72.22% | 6.94–11.11% |
 
 이는 논문에 기재된 결과이며, 이 저장소에서 동일한 수치가 재현되었음을 의미하지 않습니다. 논문은 두 방법 모두 완전연결층 뉴런의 90% 이상을 제거해야 방어 효과를 얻는 경우가 있었고, DVS128-Gesture에서는 제한된 데이터와 높은 시공간 복잡도로 정확도 회복이 불안정할 수 있다고 보고합니다.
-
-## 방어 실행 예시
-
-백도어 학습 모델과 데이터가 준비되어 있다면 N-MNIST HS-FP를 다음과 같이 실행합니다. 논문 설정인 pruning 비율 0.05, 허용 정확도 비율 0.8, fine-tuning 20 epoch를 사용합니다.
-
-```bash
-python defense/fp.py --dataset nmnist --model_path experiments/mnist_static_0.1_0.1_top-left_1_42/model.pth --T 16 --trigger_type static --trigger_label 1 --polarity 1 --pos top-left --trigger_size 0.1 --epsilon 0.1 --once_prune_ratio 0.05 --acc_ratio 0.8 --batch_size 32 --epochs 20 --device cuda --random_seed 42 --frequency_save 0 --non_blocking true
-```
-
-SS-FP는 같은 인자에서 `defense/fp.py`를 `defense/ssfp.py`로 바꿔 실행합니다. DVS128-Gesture는 `--dataset gesture`, Gesture 모델 경로, `--acc_ratio 0.3`, `--epochs 128`을 사용합니다. GPU가 없으면 `--device cpu`로 바꿀 수 있습니다.
 
