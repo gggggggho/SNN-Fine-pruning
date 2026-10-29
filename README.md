@@ -78,18 +78,3 @@ python defense/fp.py --dataset nmnist --model_path experiments/mnist_static_0.1_
 
 SS-FP는 같은 인자에서 `defense/fp.py`를 `defense/ssfp.py`로 바꿔 실행합니다. DVS128-Gesture는 `--dataset gesture`, Gesture 모델 경로, `--acc_ratio 0.3`, `--epochs 128`을 사용합니다. GPU가 없으면 `--device cpu`로 바꿀 수 있습니다.
 
-## 인용
-
-Kim, K.-H.; Lee, E.-K. HS-FP and SS-FP: Fine-Pruning-Based Backdoor Elimination for Spiking Neural Networks on Neuromorphic Event Data. *Electronics* 2026, 15, 937. https://doi.org/10.3390/electronics15050937
-
-```bibtex
-@article{kim2026hsfp_ssfp,
-  title   = {HS-FP and SS-FP: Fine-Pruning-Based Backdoor Elimination for Spiking Neural Networks on Neuromorphic Event Data},
-  author  = {Kim, Ki-Ho and Lee, Eun-Kyu},
-  journal = {Electronics},
-  year    = {2026},
-  volume  = {15},
-  pages   = {937},
-  doi     = {10.3390/electronics15050937}
-}
-```
